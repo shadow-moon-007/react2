@@ -1,0 +1,43 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Activity, ArrowUpRight, Bell, BookOpen, Building2, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, CircleHelp, Command, FileText, FolderOpen, Home, LayoutDashboard, Menu, MoreHorizontal, Network, Search, Sparkles, Users } from 'lucide-react'
+
+
+import { useAuth } from './services/auth'
+import { Avatar } from './components/ui/primitives'
+import { HomePage, OrganizationPage, SubDepartmentPage, TeamPage, PeoplePage, ResourcesPage, QuickLinksPage, AnnouncementsPage, DocumentsPage, AboutPage, AdminPage, NotFound } from './pages'
+
+
+
+
+function App(){
+ const [navOpen,setNavOpen]=useState(false),[collapsed,setCollapsed]=useState(false),[searchOpen,setSearchOpen]=useState(false),[search,setSearch]=useState(''),[orgExpanded,setOrgExpanded]=useState(true),[adminExpanded,setAdminExpanded]=useState(false),[notice,setNotice]=useState(false)
+ const loc=useLocation(),nav=useNavigate(),{user}=useAuth()
+ useEffect(()=>{setNavOpen(false)},[loc.pathname])
+ useEffect(()=>{const onKey=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setSearchOpen(true)}if(e.key==='Escape'){setSearchOpen(false);setNotice(false)}};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[])
+ const title=useMemo(()=>{const path=loc.pathname;if(path==='/')return 'Home';if(path.includes('gbs-bts'))return 'GBS-BTS';if(path.includes('gps-bo'))return 'GPS-BO';if(path.includes('/teams/'))return 'Team';if(path==='/organization')return 'Organization';if(path==='/people')return 'People';if(path==='/resources')return 'Resources';if(path==='/quick-links')return 'Quick links';if(path==='/announcements')return 'Announcements';if(path==='/documents')return 'Documents';if(path==='/about')return 'About GBS';if(path.startsWith('/admin'))return 'Administration';return 'GBS'},[loc.pathname])
+ return <div className="app-shell">
+  <aside className={`sidebar ${collapsed?'collapsed':''} ${navOpen?'mobile-open':''}`}>
+   <Link to="/" className="brand"><span className="brand-mark">g</span><span className="brand-copy"><b>gbs</b><small>Global Business Services</small></span></Link>
+   <button className="workspace-switch"><span className="workspace-icon"><Building2 size={15}/></span><span><b>GBS workspace</b><small>Department home</small></span><ChevronsUpDown size={14}/></button>
+   <nav className="side-nav" aria-label="Main navigation">
+    <div className="nav-group"><NavItem to="/" icon={<Home/>} label="Home"/><NavItem to="/about" icon={<Sparkles/>} label="About GBS"/></div>
+    <div className="nav-section"><button className="nav-section-head" onClick={()=>setOrgExpanded(!orgExpanded)} aria-expanded={orgExpanded}><span>ORGANIZATION</span><ChevronDown size={13} className={orgExpanded?'':'rotated'}/></button>{orgExpanded&&<div className="nav-tree"><NavLink to="/organization" className={({isActive})=>`tree-root ${isActive?'active':''}`}><Network size={15}/><span>GBS overview</span></NavLink><NavLink to="/gbs-bts" className={({isActive})=>`tree-root ${isActive||loc.pathname.includes('/teams/platform')?'active':''}`}><span className="tree-dot red-dot"/><span>GBS-BTS</span></NavLink><NavLink to="/gps-bo" className={({isActive})=>`tree-root ${isActive||loc.pathname.includes('/teams/business')?'active':''}`}><span className="tree-dot gold-dot"/><span>GPS-BO</span></NavLink></div>}</div>
+    <div className="nav-group"><NavItem to="/people" icon={<Users/>} label="People"/><NavItem to="/resources" icon={<BookOpen/>} label="Resources"/><NavItem to="/quick-links" icon={<ArrowUpRight/>} label="Quick links"/><NavItem to="/announcements" icon={<Activity/>} label="Announcements"/><NavItem to="/documents" icon={<FolderOpen/>} label="Documents"/></div>
+    <div className="nav-section admin-nav"><button className="nav-section-head" onClick={()=>setAdminExpanded(!adminExpanded)} aria-expanded={adminExpanded}><span>ADMINISTRATION</span><ChevronDown size={13} className={adminExpanded?'':'rotated'}/></button>{adminExpanded&&<div className="nav-group compact"><NavItem to="/admin" icon={<LayoutDashboard/>} label="Dashboard"/><NavItem to="/admin/teams" icon={<Network/>} label="Teams"/><NavItem to="/admin/people" icon={<Users/>} label="People"/><NavItem to="/admin/content" icon={<FileText/>} label="Content"/></div>}</div>
+   </nav>
+   <div className="sidebar-spacer"/><button className="nav-item help-item" onClick={()=>setNotice(true)}><CircleHelp size={17}/><span>Help & support</span></button><button className="collapse-button" onClick={()=>setCollapsed(!collapsed)} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}><ChevronLeft size={16}/><span>Collapse sidebar</span></button>
+   <div className="side-profile"><Avatar person={{name:user.name,initials:user.initials,color:'plum'}} size="small"/><span><b>{user.name}</b><small>{user.title}</small></span><MoreHorizontal size={17}/></div>
+  </aside>
+  {navOpen&&<button className="scrim" onClick={()=>setNavOpen(false)} aria-label="Close navigation"/>}
+  <main className="main-area">
+   <header className="topbar"><button className="mobile-menu icon-button" onClick={()=>setNavOpen(true)} aria-label="Open navigation"><Menu size={20}/></button><div className="crumbs"><Link to="/">GBS</Link><ChevronRight size={13}/><span>{title}</span></div><div className="topbar-actions"><button className="search-trigger" onClick={()=>setSearchOpen(true)}><Search size={16}/><span>Search anything</span><kbd>⌘ K</kbd></button><div className="notice-wrap"><button className="icon-button notification-button" onClick={()=>setNotice(!notice)} aria-label="Notifications"><Bell size={18}/><i/></button>{notice&&<div className="notification-pop"><b>You’re all caught up</b><p>New GBS updates will appear here.</p></div>}</div><button className="top-avatar" aria-label="User account"><Avatar person={{name:user.name,initials:user.initials,color:'plum'}} size="small"/></button></div></header>
+   <Routes><Route path="/" element={<HomePage/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/organization" element={<OrganizationPage/>}/><Route path="/gbs-bts" element={<SubDepartmentPage id="gbs-bts"/>}/><Route path="/gps-bo" element={<SubDepartmentPage id="gps-bo"/>}/><Route path="/teams/:teamId" element={<TeamPage/>}/><Route path="/people" element={<PeoplePage/>}/><Route path="/resources" element={<ResourcesPage/>}/><Route path="/quick-links" element={<QuickLinksPage/>}/><Route path="/announcements" element={<AnnouncementsPage/>}/><Route path="/documents" element={<DocumentsPage/>}/><Route path="/admin/*" element={<AdminPage/>}/><Route path="*" element={<NotFound/>}/></Routes>
+  </main>
+  {searchOpen&&<SearchOverlay value={search} setValue={setSearch} onClose={()=>setSearchOpen(false)} onSelect={path=>{setSearchOpen(false);setSearch('');nav(path)}}/>}
+ </div>
+}
+export default App
+function NavItem({to,icon,label}:{to:string;icon:React.ReactNode;label:string}){return <NavLink to={to} end={to==='/'} className={({isActive})=>`nav-item ${isActive?'active':''}`}>{icon}<span>{label}</span></NavLink>}
+
+function SearchOverlay({value,setValue,onClose,onSelect}:{value:string;setValue:(v:string)=>void;onClose:()=>void;onSelect:(path:string)=>void}){const options=[['Home','/',<Home size={16}/>],['Organization','/organization',<Network size={16}/>],['GBS-BTS','/gbs-bts',<Building2 size={16}/>],['GPS-BO','/gps-bo',<Building2 size={16}/>],['People','/people',<Users size={16}/>],['Resources','/resources',<BookOpen size={16}/>],['Announcements','/announcements',<Activity size={16}/>],['Documents','/documents',<FolderOpen size={16}/>]] as const;const filtered=options.filter(x=>x[0].toLowerCase().includes(value.toLowerCase()));return <div className="search-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><div className="search-modal" role="dialog" aria-modal="true" aria-label="Search GBS"><div className="search-modal-input"><Search size={19}/><input autoFocus placeholder="Search GBS workspace..." value={value} onChange={e=>setValue(e.target.value)}/><button onClick={onClose}>ESC</button></div><div className="search-results"><span className="search-label">{value?'RESULTS':'QUICK ACCESS'}</span>{filtered.map(o=><button key={o[0]} onClick={()=>onSelect(o[1])}>{o[2]}<span>{o[0]}</span><ArrowUpRight size={14}/></button>)}{!filtered.length&&<div className="search-empty">No results for “{value}”</div>}</div><div className="search-hint"><span><kbd>↑</kbd><kbd>↓</kbd> to navigate</span><span><kbd>↵</kbd> to open</span><span><Command size={12}/> K to search</span></div></div></div>}
